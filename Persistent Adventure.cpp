@@ -460,6 +460,7 @@ int strclo(Cloths a[])
 		if (i >= 1000)
 			return -1;
 	}
+	return -1;
 }
 int jiazaic()
 { // 载入装备
@@ -546,6 +547,8 @@ int displayxz(int x)
 				break;
 			}
 		}
+
+	throw std::runtime_error("displayxz error");
 }
 void cs()
 {
@@ -1912,23 +1915,14 @@ void start()
 //********************************
 int main()
 {
+	auto old_cp = GetConsoleOutputCP();
+	printf("old_cp:%d\n", old_cp);
 	// 设置中文环境
-	SetConsoleCP(65001);
-	SetConsoleOutputCP(65001);
+	SetConsoleOutputCP(CP_UTF8);
 
-	system("locale -a");
-
-	std::ios_base::sync_with_stdio(false);
-
-	locale loc("chs");
-
-	wcin.imbue(loc);
-
-	wcout.imbue(loc);
-
+	auto new_cp = GetConsoleOutputCP();
+	printf("new_cp:%d\n", new_cp);
 	system("title Persistent Adventure 无尽の冒险");
-	SetWindowPosition(0, 0);
-	system("mode con lines=60 cols=188");
 	join();		// 146
 	ReadSave(); // 读取存档
 	while (1)
