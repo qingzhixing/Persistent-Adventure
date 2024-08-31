@@ -2029,7 +2029,7 @@ void ReadSave()
 }
 void Exit()
 {
-	if (MessageBox(NULL, L"\1是否退出\1", L"无尽の冒险", MB_ICONQUESTION | MB_YESNO) == IDNO)
+	if (MessageBox(NULL, TEXT("是否要保存并退出游戏？"), TEXT("无尽の冒险"), MB_ICONQUESTION | MB_YESNO) == IDNO)
 		return;
 	WriteSave();
 	DelayPrint(L"感谢各位玩家大大的支持！拜拜~");
