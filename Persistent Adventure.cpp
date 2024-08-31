@@ -2,7 +2,9 @@
 #include <windows.h>
 #include <conio.h>
 #include <fstream>
+#include <locale>
 using std::endl;
+using std::locale;
 using std::wcin;
 using std::wcout;
 void SetConsoleTextColor(long long a);
@@ -1910,7 +1912,21 @@ void start()
 //********************************
 int main()
 {
-	system("title 无尽の冒险");
+	// 设置中文环境
+	SetConsoleCP(65001);
+	SetConsoleOutputCP(65001);
+
+	system("locale -a");
+
+	std::ios_base::sync_with_stdio(false);
+
+	locale loc("chs");
+
+	wcin.imbue(loc);
+
+	wcout.imbue(loc);
+
+	system("title Persistent Adventure 无尽の冒险");
 	SetWindowPosition(0, 0);
 	system("mode con lines=60 cols=188");
 	join();		// 146
