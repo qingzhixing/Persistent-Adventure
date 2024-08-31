@@ -1,22 +1,25 @@
 #include <iostream>
 #include <windows.h>
 #include <conio.h>
+#include <fstream>
+using std::cin;
 using std::cout;
+using std::endl;
 void SetConsoleTextColor(long long a);
-void DelayPrint(char *p);
+void DelayPrint(wchar_t *p);
 void Pause();
 void SetConsoleCursor(int x, int y);
 void SetWindowPosition(int x, int y);
-void in(int &a);
-void read();
-void write();
-void out();
-void sprint(char *p);
-int SuiJi(int a, int b);
+void FastReadInteger(int &a);
+void ReadSave();
+void WriteSave();
+void Exit();
+void GameColoredPrint(wchar_t *p);
+int GenerateRandomNumber(int a, int b);
 /*************************************************/
 struct Display
 {
-	char name[50];
+	wchar_t name[50];
 	long long attack;
 	long long defense;
 	long long level;
@@ -25,21 +28,21 @@ struct Display
 }; // 测试阶段，代码不知道怎么实现
 struct Monster
 {
-	char name[30];
-	char display[20];
+	wchar_t name[30];
+	wchar_t abilityName[20];
 	long long health;
 	long long max_health;
 	long long attack;
 	long long defense;
 	long long level;
-	char fang[20];
-	char gong[20];
+	wchar_t fang[30];
+	wchar_t gong[30];
 	long long money;
 	long long xp;
-	void sx()
+	void DisplayInfo()
 	{
 		printf("\n怪物名字：%s\n", name);
-		printf("怪物技能：%s\n", display);
+		printf("怪物技能：%s\n", abilityName);
 		printf("生命：%lld\n", health);
 		printf("攻击力：%lld*%lld=*%lld\n", attack, level, attack * level);
 		printf("防御力：%lld*%lld=*%lld\n", defense, level, defense * level);
@@ -56,11 +59,11 @@ struct Monster
 		return true;
 	}
 };
-struct pet
+struct Pet
 {
-	char name[30];
-	char display1[20];
-	char display2[20];
+	wchar_t name[30];
+	wchar_t display1[20];
+	wchar_t display2[20];
 	long long health;
 	long long max_health;
 	long long xp;
@@ -68,8 +71,8 @@ struct pet
 	long long attack;
 	long long defense;
 	long long level;
-	char fang[20];
-	char gong[20];
+	wchar_t fang[20];
+	wchar_t gong[20];
 	long long money;
 	long long displayd;
 	void sx()
@@ -129,16 +132,16 @@ struct pet
 		return true;
 	}
 };
-struct plant
+struct plan
 {
-	char name[200];	 // 任务名
-	long long money; // 奖励的金币
-	bool finish;	 // 是否完成
-	bool get;		 // 是否领取
+	wchar_t name[200]; // 任务名
+	long long money;   // 奖励的金币
+	bool finish;	   // 是否完成
+	bool get;		   // 是否领取
 };
 struct Cloths
 {
-	char name[25];
+	wchar_t name[25];
 	long long attack_up;
 	long long defense_up;
 	long long num;
@@ -163,43 +166,43 @@ struct wuping
 {
 	// 用来合成
 	// 如果有效果也可以像道具那样用一次
-	char name[20];
-	char hecheng[100];
-	char texiao[100];
+	wchar_t name[20];
+	wchar_t hecheng[100];
+	wchar_t texiao[100];
 	long long need_money;
 	void sx()
 	{
 		printf("\n物品名字:[%s]\n", name);
-		if (strcmp(hecheng, "") == 0)
+		if (wcscmp(hecheng, L"") == 0)
 			printf("无法合成\n");
 		else
 			printf("合成方式:[%s]\n", hecheng);
-		if (strcmp(texiao, "") == 0)
+		if (wcscmp(texiao, L"") == 0)
 			printf("无特效\n");
 		else
 			printf("特效:[%s]\n", texiao);
 		printf("价值:%lld\n", need_money);
 	}
 };
-struct daoju
+struct Item
 {
 	// 像药水一样使用一次就用完了...
-	char name[20];
+	wchar_t name[20];
 	long long attack;
 	long long defense;
-	char hecheng[100];
-	char texiao[100];
+	wchar_t hecheng[100];
+	wchar_t texiao[100];
 	long long need_money;
 	void sx()
 	{
 		printf("\n道具名字:[%s]\n", name);
 		printf("攻击增加: %lld\n", attack);
 		printf("防御增加: %lld\n", defense);
-		if (strcmp(hecheng, "") == 0)
+		if (wcscmp(hecheng, L"") == 0)
 			printf("无法合成\n");
 		else
 			printf("合成方式:[%s]\n", hecheng);
-		if (strcmp(texiao, "") == 0)
+		if (wcscmp(texiao, L"") == 0)
 			printf("无特效\n");
 		else
 			printf("特效:[%s]\n", texiao);
@@ -207,17 +210,17 @@ struct daoju
 	}
 	void operator=(const wuping a)
 	{
-		strcpy(name, a.name);
-		strcpy(hecheng, a.hecheng);
-		strcpy(texiao, a.texiao);
+		wcscpy(name, a.name);
+		wcscpy(hecheng, a.hecheng);
+		wcscpy(texiao, a.texiao);
 		need_money = a.need_money;
 		attack = defense = 0;
 	}
 };
 struct PLAYER
 {
-	char name[100];
-	char display[20];
+	wchar_t name[100];
+	wchar_t display[20];
 	long long health;
 	long long max_health;
 	long long xp;
@@ -227,8 +230,8 @@ struct PLAYER
 	long long level;
 	long long money;
 	/********/
-	pet p_pet[9]; // 玩家拥有8只宠物【8只为宠物上限】
-	plant player_plant[100];
+	Pet p_pet[9]; // 玩家拥有8只宠物【8只为宠物上限】
+	plan player_plan[100];
 	cloths_slot slot;
 	cloths_fight fight;
 	/********/
@@ -291,27 +294,27 @@ struct PLAYER
 	{
 		// 冰封1  电击2  灼烧3
 		// 狂暴4  自由搏击5  连击6
-		if (strcmp(display, "冰封") == 0)
+		if (wcscmp(display, L"冰封") == 0)
 		{
 			return 1;
 		}
-		if (strcmp(display, "电击") == 0)
+		if (wcscmp(display, L"电击") == 0)
 		{
 			return 2;
 		}
-		if (strcmp(display, "灼烧") == 0)
+		if (wcscmp(display, L"灼烧") == 0)
 		{
 			return 3;
 		}
-		if (strcmp(display, "狂暴") == 0)
+		if (wcscmp(display, L"狂暴") == 0)
 		{
 			return 4;
 		}
-		if (strcmp(display, "自由搏击") == 0)
+		if (wcscmp(display, L"自由搏击") == 0)
 		{
 			return 5;
 		}
-		if (strcmp(display, "连击") == 0)
+		if (wcscmp(display, L"连击") == 0)
 		{
 			return 6;
 		}
@@ -325,35 +328,56 @@ struct world
 	SYSTEMTIME last;
 };
 /*******************变量定义**********************/
-int i, j, k, n, m, bb;
+int i, j, k, n, m, inputVarible;
 PLAYER player;
-pet Pet[20] = {
-	{}, {"小恐龙", "喷火", "冲撞", 50, 50, 0, 90, 15, 9, 1, "凌甲", "钢爪", 150, 0}, {"大鹏鸟", "高鸣", "俯冲", 70, 70, 0, 120, 23, 14, 1, "羽盾", "尖嘴", 200, 0}, {"史莱姆", "粘丝", "分身level_up", 69, 69, 0, 300, 50, 73, 1, "主角甲", "主角盾", 960, 0}, {"\0", "\0", "\0", 0, 0, 0, 0, 0, 0, 0, "\0", "\0", 0, 0}};
+Pet petInstance[20] = {
+	{},
+	{L"小恐龙", L"喷火", L"冲撞", 50, 50, 0, 90, 15, 9, 1, L"凌甲", L"钢爪", 150, 0},
+	{L"大鹏鸟", L"高鸣", L"俯冲", 70, 70, 0, 120, 23, 14, 1, L"羽盾", L"尖嘴", 200, 0},
+	{L"史莱姆", L"粘丝", L"分身level_up", 69, 69, 0, 300, 50, 73, 1, L"主角甲", L"主角盾", 960, 0},
+	{L"\0", L"\0", L"\0", 0, 0, 0, 0, 0, 0, 0, L"\0", L"\0", 0, 0}};
 /*
-char name[25];
+wchar_t name[25];
 	long long attack_up;
 	long long defense_up;
 	long long num;
 	long long money;//售价
 	*/
 Cloths c_std[100] = {
-	{}, {"破旧的小刀", 10, 0, 0, 30}, {"破木盾", 0, 13, 0, 30}, {"铁剑", 17, 2, 0, 50}, {"铁甲", 0, 19, 0, 50}, {"滑石刀", 30, 6, 0, 390}, {"轻质石衣", 2, 35, 0, 390}, {"长勾", 25, 10, 0, 400}, {"圣骑士的盾", 13, 40, 0, 400}, {"雪山激光剑", 60, 35, 0, 1600}, {"冰玉石", 10, 90, 0, 1600}, {"光辉-0", 98, 80, 0, 2800}, {"结界", 30, 100, 0, 3220}};
+	{},
+	{L"破旧的小刀", 10, 0, 0, 30},
+	{L"破木盾", 0, 13, 0, 30},
+	{L"铁剑", 17, 2, 0, 50},
+	{L"铁甲", 0, 19, 0, 50},
+	{L"滑石刀", 30, 6, 0, 390},
+	{L"轻质石衣", 2, 35, 0, 390},
+	{L"长勾", 25, 10, 0, 400},
+	{L"圣骑士的盾", 13, 40, 0, 400},
+	{L"雪山激光剑", 60, 35, 0, 1600},
+	{L"冰玉石", 10, 90, 0, 1600},
+	{L"光辉-0", 98, 80, 0, 2800},
+	{L"结界", 30, 100, 0, 3220}};
 world wor;
-pet empity = {};
-// wuping & daoju
+Pet empity = {};
+// wuping & Item
 // 见：我的世界图鉴大全
 wuping things[100] =
 	{
-		{}, {"草", "1*dirt", "", 1}, {"土", "1*grass", "", 1}, {"石头", "1*cobblestone", "", 3}, {"圆石", "1*stone", "", 3}, {"空气", "", "Doomsday Lord", 9223372036854775800}, // 效果：末日之主
-		{"花岗岩", "", "", 3},
-		{"磨制花岗岩", "9*granite", "", 27},
-		{"闪长岩", "", "", 3},
-		{"磨制闪长岩", "9*diorite", "", 27},
-		{"安山岩", "", "", 3},
-		{"磨制安山岩", "9*andesite", "", 27},
-		{"沙子", "", "", 1},
-		{"木头", "", "", 16},
-		{"木板", "1/4*log", "", 4}};
+		{},
+		{L"草", L"1*dirt", L"", 1},
+		{L"土", L"1*grass", L"", 1},
+		{L"石头", L"1*cobblestone", L"", 3},
+		{L"圆石", L"1*stone", L"", 3},
+		{L"空气", L"", L"Doomsday Lord", 9223372036854775800}, // 效果：末日之主
+		{L"花岗岩", L"", L"", 3},
+		{L"磨制花岗岩", L"9*granite", L"", 27},
+		{L"闪长岩", L"", L"", 3},
+		{L"磨制闪长岩", L"9*diorite", L"", 27},
+		{L"安山岩", L"", L"", 3},
+		{L"磨制安山岩", L"9*andesite", L"", 27},
+		{L"沙子", L"", L"", 1},
+		{L"木头", L"", L"", 16},
+		{L"木板", L"1/4*log", L"", 4}};
 #define grass things[1]
 #define dirt things[2]
 #define stone things[3]
@@ -368,13 +392,26 @@ wuping things[100] =
 #define sand things[12]
 #define log things[13]
 #define planks things[14]
-daoju prop[100] =
+Item prop[100] =
 	{
 		{}, {}};
 // fight
-Monster *guai;
+Monster *currentEnemy;
 Monster monster[100] = {
-	{}, {"炒鸡玛丽", "", 200, 200, 100, 80, 1, "玛丽刀", "玛丽甲", 100, 30}, {"超级蘑菇", "", 300, 300, 40, 60, 1, "孢刃", "孢盾", 130, 40}, {"国王", "control", 500, 500, 100, 100, 1, "国王的新枪", "国王的皇冠", 500, 80}, {"克鲁斯之眼", "", 1000, 1000, 400, 130, 1, "", "", 1000, 300}, {"[毁灭]上帝", "上帝之手", 5e3, 5e3, 3000, 3000, 1, "", "", 1e5, 1e3}, {"人类", "生命回复", 100, 100, 5, 3000, 1, "", "", 5e3, 90}, {"森林女王", "森林控制", 3000, 3000, 400, 800, 1, "藤鞭", "至圣金盾", 10000, 8000}, {"梦之守卫", "威压", 240, 240, 80, 120, 1, "梦境匕首", "云制衣", 300, 70}, {"神秘老人", "开挂", 400, 400, 300, 1000, 1, "[氪金道具]法杖", "[氪金道具]防护罩", 10, 1000}, {"[至圣]欧几里得", "几何构建", 1000, 1000, 400, 400, 1, "[几何原本]角", "[几何原本]图", 10000, 100000}, {"粉红羊先生", "", 200, 200, 50, 40, 1, "", "", 1000, 1000}, {"猪先生", "", 200, 200, 80, 20, 1, "", "", 800, 1200}, {"Steve", "世界编辑者", 800, 800, 130, 200, 1, "", "", 1000, 2000}};
+	{},
+	{L"炒鸡玛丽", L"", 200, 200, 100, 80, 1, "玛丽刀", "玛丽甲", 100, 30},
+	{L"超级蘑菇", L"", 300, 300, 40, 60, 1, "孢刃", "孢盾", 130, 40},
+	{L"国王", "control", 500, 500, 100, 100, 1, "国王的新枪", "国王的皇冠", 500, 80},
+	{L"克鲁斯之眼", L"", 1000, 1000, 400, 130, 1, L"", L"", 1000, 300},
+	{L"[毁灭]上帝", "上帝之手", 5000, 5000, 3000, 3000, 1, L"", L"", 100000, 1000},
+	{L"人类", "生命回复", 100, 100, 5, 3000, 1, L"", L"", 5000, 90},
+	{L"森林女王", "森林控制", 3000, 3000, 400, 800, 1, "藤鞭", "至圣金盾", 10000, 8000},
+	{L"梦之守卫", "威压", 240, 240, 80, 120, 1, "梦境匕首", "云制衣", 300, 70},
+	{L"神秘老人", "开挂", 400, 400, 300, 1000, 1, "[氪金道具]法杖", "[氪金道具]防护罩", 10, 1000},
+	{L"[至圣]欧几里得", "几何构建", 1000, 1000, 400, 400, 1, "[几何原本]角", "[几何原本]图", 10000, 100000},
+	{L"粉红羊先生", L"", 200, 200, 50, 40, 1, L"", L"", 1000, 1000},
+	{L"猪先生", L"", 200, 200, 80, 20, 1, L"", L"", 800, 1200},
+	{L"Steve", "世界编辑者", 800, 800, 130, 200, 1, L"", L"", 1000, 2000}};
 #define ml monster[1]
 #define mg monster[2]
 #define king monster[3]
@@ -393,19 +430,19 @@ bool can_use_display;
 Cloths _empity;
 Cloths canin[100];
 //......................其它应用变量
-int strpla(plant a[])
+int strpla(plan a[])
 {
 	for (int i = 1;; i++)
 	{
-		if (strcmp(a[i].name, "\0") == 0)
+		if (wcscmp(a[i].name, "\0") == 0)
 			return i - 1;
 	}
 }
-int strpet(pet Pet[])
+int PetArraySize(Pet pet[])
 { // 宠物数量统计
 	for (int i = 1;; i++)
 	{
-		if (strcmp(Pet[i].name, "\0") == 0)
+		if (wcscmp(pet[i].name, "\0") == 0)
 			return i - 1;
 		if (i >= 1000)
 			return -1;
@@ -416,7 +453,7 @@ int strclo(Cloths a[])
 	for (int i = 1; i <= 1000; i++)
 	{
 		//		cout<<"出不去\n";
-		if (strcmp(a[i].name, "\0") == 0)
+		if (wcscmp(a[i].name, "\0") == 0)
 			return i - 1;
 		if (i >= 1000)
 			return -1;
@@ -434,12 +471,12 @@ int jiazaic()
 	// 统计可装备装备数量
 	// 并加入数组
 }
-void number_of_cloth(char a[], int number)
+void number_of_cloth(wchar_t a[], int number)
 {
 	int l = strclo(c_std);
 	for (i = 1; i <= l; i++)
 	{
-		if (strcmp(c_std[i].name, a) == 0)
+		if (wcscmp(c_std[i].name, a) == 0)
 			c_std[i].num += number;
 	}
 }
@@ -447,12 +484,12 @@ void sale(Cloths &a)
 {
 	a.sx();
 	printf("是否卖出%s?1.yes 2.no\n", a.name);
-	int bb;
+	int inputVarible;
 mai:
-	in(bb);
-	if (bb == 2)
+	FastReadInteger(inputVarible);
+	if (inputVarible == 2)
 		return;
-	if (bb != 1)
+	if (inputVarible != 1)
 	{
 		cout << "输入错误\n";
 		goto mai;
@@ -466,17 +503,17 @@ int displayxz(int x)
 	if (x == 1)
 		while (1)
 		{
-			in(bb);
-			switch (bb)
+			FastReadInteger(inputVarible);
+			switch (inputVarible)
 			{
 			case 1:
-				strcpy(player.display, "冰封");
+				wcscpy(player.display, "冰封");
 				return 0;
 			case 2:
-				strcpy(player.display, "电击");
+				wcscpy(player.display, "电击");
 				return 0;
 			case 3:
-				strcpy(player.display, "灼烧");
+				wcscpy(player.display, "灼烧");
 				return 0;
 			case 0:
 				return 1;
@@ -488,17 +525,17 @@ int displayxz(int x)
 	if (x == 2)
 		while (1)
 		{
-			in(bb);
-			switch (bb)
+			FastReadInteger(inputVarible);
+			switch (inputVarible)
 			{
 			case 1:
-				strcpy(player.display, "狂暴");
+				wcscpy(player.display, "狂暴");
 				return 0;
 			case 2:
-				strcpy(player.display, "自由搏击");
+				wcscpy(player.display, "自由搏击");
 				return 0;
 			case 3:
-				strcpy(player.display, "连击");
+				wcscpy(player.display, "连击");
 				return 0;
 			case 0:
 				return 1;
@@ -518,10 +555,10 @@ void cs()
 	player.level = 1;
 	player.max_xp = 150;
 	player.money = 8110;
-	strcpy(player.player_plant[1].name, "asdasd");
-	player.player_plant[1].finish = true;
-	player.player_plant[1].money = 100;
-	player.p_pet[1] = Pet[1];
+	wcscpy(player.player_plan[1].name, "asdasd");
+	player.player_plan[1].finish = true;
+	player.player_plan[1].money = 100;
+	player.p_pet[1] = petInstance[1];
 	player.p_pet[1].xp = 1000000;
 	player.p_pet[1].health -= 10;
 	for (int i = 1; i <= strclo(c_std); i++)
@@ -529,41 +566,41 @@ void cs()
 		c_std[i].num++;
 	}
 	player.sx();
-	write();
+	WriteSave();
 	Pause();
 	system("cls");
 }
 void zdy_player()
 {
-	sprint("玩家，请输入您的名字\n");
+	GameColoredPrint("玩家，请输入您的名字\n");
 	cin >> player.name;
 a:
-	sprint("请选择你的角色:\n\n1.元素法师     2.狂战士     3.驯兽师");
-	in(bb);
+	GameColoredPrint("请选择你的角色:\n\n1.元素法师     2.狂战士     3.驯兽师");
+	FastReadInteger(inputVarible);
 	int cccc;
-	switch (bb)
+	switch (inputVarible)
 	{
 	case 1:
-		sprint("\n玩家，请选择您的技能：\n(1.冰封     2.电击     3.灼烧)请选择：0.退出\n");
+		GameColoredPrint("\n玩家，请选择您的技能：\n(1.冰封     2.电击     3.灼烧)请选择：0.退出\n");
 		cccc = displayxz(1);
 		if (cccc == 1)
 			goto a;
 		break;
 	case 2:
-		sprint("\n玩家，请选择您的技能：\n(1.狂暴     2.自由搏击     3.连击)请选择：0.退出\n");
+		GameColoredPrint("\n玩家，请选择您的技能：\n(1.狂暴     2.自由搏击     3.连击)请选择：0.退出\n");
 		cccc = displayxz(2);
 		if (cccc == 1)
 			goto a;
 		break;
 	case 3:
-		sprint("\n未设置\n");
+		GameColoredPrint("\n未设置\n");
 		goto a;
 		break;
 	default:
 		cout << "\n输入错误\n";
 		goto a;
 	}
-	if (strcmp(player.name, "jimmy96b") == 0)
+	if (wcscmp(player.name, "jimmy96b") == 0)
 	{
 		cs();
 		return;
@@ -577,14 +614,14 @@ a:
 	player.max_xp = 150;
 	player.money = 80;
 	player.sx();
-	write();
+	WriteSave();
 	Pause();
 	system("cls");
 }
 void banquan()
 {
 	system("cls");
-	sprint("此游戏由");
+	GameColoredPrint("此游戏由");
 	DelayPrint("【水墨工作室】");
 	printf("创作\n\n");
 	DelayPrint("未经允许，不得转载\n");
@@ -601,7 +638,7 @@ void banquan()
 void about_us()
 {
 	system("cls");
-	sprint("----\n此游戏为作者8.0版：\n相对于上版本，代码进行了一些改进，变得更加容易明白\n1.添加[游戏商店]中的一些怪物2.添加[物品]及[道具]功能(No!)\n若有不足之处，请玩家大大们原谅\n-----");
+	GameColoredPrint("----\n此游戏为作者8.0版：\n相对于上版本，代码进行了一些改进，变得更加容易明白\n1.添加[游戏商店]中的一些怪物2.添加[物品]及[道具]功能(No!)\n若有不足之处，请玩家大大们原谅\n-----");
 	Pause();
 	system("cls");
 }
@@ -614,7 +651,7 @@ int fight()
 	bool guai_can_attack = true, player_can_attack = true; // 玩家及怪物可攻击
 	//	player_can_attack=false;
 	//	guai_can_attack=false;
-	long long health = guai->health;
+	long long health = currentEnemy->health;
 fnn:
 	if (player_can_attack == false)
 	{
@@ -623,30 +660,30 @@ fnn:
 	}
 	else
 	{
-		sprint("\n==========================================================\n");
-		printf("[%s]你要如何战胜%s?\n", player.name, guai->name);
-		sprint("1.普通攻击(不建议)     2.道具     3.查看人物此时以及对手此时属性\n\n4.宠物     5.逃跑(因该是怂了)\n");
-		sprint("==========================================================\n");
-		in(bb);
-		switch (bb)
+		GameColoredPrint("\n==========================================================\n");
+		printf("[%s]你要如何战胜%s?\n", player.name, currentEnemy->name);
+		GameColoredPrint("1.普通攻击(不建议)     2.道具     3.查看人物此时以及对手此时属性\n\n4.宠物     5.逃跑(因该是怂了)\n");
+		GameColoredPrint("==========================================================\n");
+		FastReadInteger(inputVarible);
+		switch (inputVarible)
 		{
 		case 1:
 		{
 			int shanghai;
-			shanghai = player.attack + rand() % 10 + 1 - guai->defense * guai->level / 2;
+			shanghai = player.attack + rand() % 10 + 1 - currentEnemy->defense * currentEnemy->level / 2;
 			if (shanghai < 0)
 				shanghai = 1;
 			health -= shanghai;
 			if (health < 0)
 				health = 0;
 			printf("你发动了攻击,敌方受到%d点伤害\n\n敌方还剩%lld点血\n", shanghai, health);
-			write();
+			WriteSave();
 			Pause();
 			break;
 		}
 		case 2:
 		{
-			sprint("\n本功能尚未实现\n");
+			GameColoredPrint("\n本功能尚未实现\n");
 			goto fnn;
 			break;
 		}
@@ -659,24 +696,24 @@ fnn:
 			SetConsoleTextColor(11);
 			printf("------对方属性：------");
 			SetConsoleTextColor(15);
-			guai->sx();
-			puts("");
+			currentEnemy->DisplayInfo();
+			puts(L"");
 			goto fnn;
 			break;
 		}
 		case 4:
 		{
-			sprint("\n本功能尚未实现\n");
+			GameColoredPrint("\n本功能尚未实现\n");
 			goto fnn;
 			break;
 		}
 		case 5:
 		{
-			int go = SuiJi(1, 10);
+			int go = GenerateRandomNumber(1, 10);
 			if (go <= 4)
 			{
 				cout << "逃跑成功!\n";
-				write();
+				WriteSave();
 				return 2;
 			}
 			else
@@ -698,22 +735,22 @@ fnn:
 	{
 		system("cls");
 		SetConsoleTextColor(10);
-		printf("您战胜了%s\n\n", guai->name);
-		printf("您获得了%lld*%lld=%lld金币\n您", guai->money, guai->level, guai->money * guai->level);
+		printf("您战胜了%s\n\n", currentEnemy->name);
+		printf("您获得了%lld*%lld=%lld金币\n您", currentEnemy->money, currentEnemy->level, currentEnemy->money * currentEnemy->level);
 		bool cw = false; // 是否有宠物：初始默认无
-		if (strpet(player.p_pet) > 0)
+		if (PetArraySize(player.p_pet) > 0)
 			cout << "以及您的宠物", cw = true;
-		printf("获得了%lld*%lld=%lld点经验\n", guai->xp, guai->level, guai->xp * guai->level);
-		player.xp += guai->xp * guai->level;
-		player.money += guai->money * guai->level;
+		printf("获得了%lld*%lld=%lld点经验\n", currentEnemy->xp, currentEnemy->level, currentEnemy->xp * currentEnemy->level);
+		player.xp += currentEnemy->xp * currentEnemy->level;
+		player.money += currentEnemy->money * currentEnemy->level;
 		if (cw == true)
-			for (int i = 1; i <= strpet(player.p_pet); i++)
-				player.p_pet[i].xp += guai->xp * guai->level;
+			for (int i = 1; i <= PetArraySize(player.p_pet); i++)
+				player.p_pet[i].xp += currentEnemy->xp * currentEnemy->level;
 		SetConsoleTextColor(15);
 		Pause();
 		fighting = false;
-		guai->level++;
-		write();
+		currentEnemy->level++;
+		WriteSave();
 		return 1;
 	}
 	else
@@ -726,26 +763,26 @@ fnn:
 		else
 		{
 			// 怪物反击时有20%触发技能
-			int shanghai = guai->attack * guai->level + rand() % 10 + 1 - player.defense / 2;
+			int shanghai = currentEnemy->attack * currentEnemy->level + rand() % 10 + 1 - player.defense / 2;
 			if (shanghai < 0)
 				shanghai = 1;
 			player.health -= shanghai;
 			if (player.health < 0)
 				player.health = 0;
-			printf("[%s]", guai->name);
-			sprint("发起了反击,你受到");
+			printf("[%s]", currentEnemy->name);
+			GameColoredPrint("发起了反击,你受到");
 			printf("%d", shanghai);
-			sprint("点伤害,还剩");
+			GameColoredPrint("点伤害,还剩");
 			printf("%lld", player.health);
-			sprint("点血量\n");
-			write();
+			GameColoredPrint("点血量\n");
+			WriteSave();
 			Pause();
 		}
 	}
 	if (!player.alive())
 	{
 		system("cls");
-		write();
+		WriteSave();
 		SetConsoleTextColor(12);
 		printf("战死!,金币掉落10%\n\n复活时血量为最高血量的50%\n\n");
 		SetConsoleTextColor(15);
@@ -754,7 +791,7 @@ fnn:
 			player.money = 0;
 		if (player.max_health <= 140)
 		{
-			sprint("但由于您的生命值太低，直接恢复至最大生命\n");
+			GameColoredPrint("但由于您的生命值太低，直接恢复至最大生命\n");
 			player.health = player.max_health;
 		}
 		else
@@ -771,9 +808,9 @@ fnn:
 void join()
 {
 	SetConsoleCursor(40, 10);
-	sprint("===============================");
+	GameColoredPrint("===============================");
 	SetConsoleCursor(40, 15);
-	sprint("================================");
+	GameColoredPrint("================================");
 	SetConsoleCursor(40, 11);
 	DelayPrint("此游戏为【水墨工作室】制作");
 	SetConsoleCursor(40, 14);
@@ -784,20 +821,20 @@ void join()
 /*****/
 void chou()
 {
-	char s[5] = " orz";
-	sprint("\n[抽奖规则]:\n");
-	sprint("ooo 300金币\n");
-	sprint("rrr 150金币\n");
-	sprint("zzz 100金币\n");
-	sprint("有两个字母相同 110金币\n");
-	sprint("【orz】--->800金币\n");
-	sprint("其它：10金币\n");
+	wchar_t s[5] = " orz";
+	GameColoredPrint("\n[抽奖规则]:\n");
+	GameColoredPrint("ooo 300金币\n");
+	GameColoredPrint("rrr 150金币\n");
+	GameColoredPrint("zzz 100金币\n");
+	GameColoredPrint("有两个字母相同 110金币\n");
+	GameColoredPrint("【orz】--->800金币\n");
+	GameColoredPrint("其它：10金币\n");
 cnn:
-	sprint("\n-=-=-=-(^oo^)\n");
-	sprint("您是否愿意花100金币进行抽奖？1.yes/2.no\n");
-	sprint("-=-=-=-=-=-=-\n");
-	in(bb);
-	if (bb == 1)
+	GameColoredPrint("\n-=-=-=-(^oo^)\n");
+	GameColoredPrint("您是否愿意花100金币进行抽奖？1.yes/2.no\n");
+	GameColoredPrint("-=-=-=-=-=-=-\n");
+	FastReadInteger(inputVarible);
+	if (inputVarible == 1)
 		if (player.money >= 100)
 		{
 			player.money -= 100;
@@ -811,7 +848,7 @@ cnn:
 				Sleep(1);
 			}
 			a = rand() % 3 + 1;
-			puts("");
+			puts(L"");
 			for (float i = 1; i >= 0; i -= 0.01)
 			{
 				printf("2.[正在加载]%.2f\r", i);
@@ -820,7 +857,7 @@ cnn:
 				Sleep(1);
 			}
 			b = rand() % 3 + 1;
-			puts("");
+			puts(L"");
 			for (float i = 1; i >= 0; i -= 0.01)
 			{
 				printf("3.[正在加载]%.2f\r", i);
@@ -829,10 +866,10 @@ cnn:
 				Sleep(1);
 			}
 			c = rand() % 3 + 1;
-			puts("");
-			sprint("您的抽奖结果是:【");
+			puts(L"");
+			GameColoredPrint("您的抽奖结果是:【");
 			printf("%c,%c,%c", s[a], s[b], s[c]);
-			sprint("】\n");
+			GameColoredPrint("】\n");
 			int p;
 			if (s[a] == s[b] && s[b] == s[c])
 			{
@@ -854,17 +891,17 @@ cnn:
 		}
 		else
 		{
-			sprint("\n金币不够\n");
+			GameColoredPrint("\n金币不够\n");
 		}
 }
 void house()
 {
 hnn:
-	sprint("\n===============================\n");
-	sprint("【探险家的小屋】:\n1.装备售出    2.抽奖     3.与房子的主人对话\n\n0.退出  (请选择:)\n");
-	sprint("===============================\n");
-	in(bb);
-	switch (bb)
+	GameColoredPrint("\n===============================\n");
+	GameColoredPrint("【探险家的小屋】:\n1.装备售出    2.抽奖     3.与房子的主人对话\n\n0.退出  (请选择:)\n");
+	GameColoredPrint("===============================\n");
+	FastReadInteger(inputVarible);
+	switch (inputVarible)
 	{
 	case 1:
 	{
@@ -872,28 +909,28 @@ hnn:
 		int n = jiazaic();
 		if (n == 0)
 		{
-			sprint("您没有可用装备...\n");
+			GameColoredPrint("您没有可用装备...\n");
 			goto hnn;
 		}
-		sprint("您的可用装备:\n");
+		GameColoredPrint("您的可用装备:\n");
 		for (int i = 1; i <= n; i++)
 		{
 			printf("%d.[%s]    ", i, canin[i].name);
 			if (i % 3 == 0 && i + 1 <= n)
-				puts("");
+				puts(L"");
 		}
-		sprint("0.退出\n");
+		GameColoredPrint("0.退出\n");
 	salec:
-		in(bb);
-		if (bb < 0 || bb > n)
+		FastReadInteger(inputVarible);
+		if (inputVarible < 0 || inputVarible > n)
 		{
 			cout << "choose error\n";
 			goto salec;
 		}
-		else if (bb == 0)
+		else if (inputVarible == 0)
 			goto hnn;
 		else
-			sale(canin[bb]);
+			sale(canin[inputVarible]);
 		goto mai1;
 		break;
 	}
@@ -910,10 +947,10 @@ hnn:
 			DelayPrint("亲爱的");
 			printf("[%s]\n\n", player.name);
 			DelayPrint("你是第一次来到这里吧！\n给你一些装备，去冒险吧！\n");
-			sprint("\n[提示]:您获得了[破旧的小刀]*1[破木盾]*1\n\n");
+			GameColoredPrint("\n[提示]:您获得了[破旧的小刀]*1[破木盾]*1\n\n");
 			number_of_cloth("破旧的小刀", 1);
 			number_of_cloth("破木盾", 1);
-			write();
+			WriteSave();
 		}
 		else
 		{
@@ -941,18 +978,18 @@ void game_sell()
 	cho.attack = cho.defense = cho.max_health = cho.health = cho.money = cho.xp = 1e9;
 	cho.level = 1;
 gnn0:
-	sprint("\n欢迎来到游戏专卖店!\n	这里有应有尽有的游戏供您玩耍\n");
-	sprint("\n~~~~~~~~~~~~~~~~~~~~\n");
-	sprint("1.超级玛丽     2.泰拉瑞亚     3.沙盒2\n\n4.Minecraft     5.物理沙盘     6.元气骑士\n\n0.退出(请选择:)\n");
-	sprint("~~~~~~~~~~~~~~~~~~~~\n");
+	GameColoredPrint("\n欢迎来到游戏专卖店!\n	这里有应有尽有的游戏供您玩耍\n");
+	GameColoredPrint("\n~~~~~~~~~~~~~~~~~~~~\n");
+	GameColoredPrint("1.超级玛丽     2.泰拉瑞亚     3.沙盒2\n\n4.Minecraft     5.物理沙盘     6.元气骑士\n\n0.退出(请选择:)\n");
+	GameColoredPrint("~~~~~~~~~~~~~~~~~~~~\n");
 gnn:
-	in(bb);
-	if (bb < 0 || bb > 6)
+	FastReadInteger(inputVarible);
+	if (inputVarible < 0 || inputVarible > 6)
 	{
 		cout << "\n输入错误！\n";
 		goto gnn;
 	}
-	if (bb == 0)
+	if (inputVarible == 0)
 		return;
 	int t;
 	t = rand() % 3 + 1;
@@ -969,52 +1006,52 @@ gnn:
 		break;
 	}
 	int i;
-	if (bb == 1)
+	if (inputVarible == 1)
 	{
-		t = SuiJi(1, 2);
+		t = GenerateRandomNumber(1, 2);
 		if (t == 1)
-			guai = &ml;
+			currentEnemy = &ml;
 		else
-			guai = &mg;
+			currentEnemy = &mg;
 	}
-	else if (bb == 2)
+	else if (inputVarible == 2)
 	{
-		t = SuiJi(1, 2);
+		t = GenerateRandomNumber(1, 2);
 		if (t == 1)
-			guai = &king;
+			currentEnemy = &king;
 		else
-			guai = &krous_eye;
+			currentEnemy = &krous_eye;
 	}
-	else if (bb == 3)
+	else if (inputVarible == 3)
 	{
-		t = SuiJi(1, 10);
+		t = GenerateRandomNumber(1, 10);
 		if (t < 3)
 		{
 			DelayPrint("一阵强烈的妖风吹来，你全身一抖...\n");
-			guai = &God;
+			currentEnemy = &God;
 		}
 		else
-			guai = &Human;
+			currentEnemy = &Human;
 	}
-	else if (bb == 4)
+	else if (inputVarible == 4)
 	{
-		t = SuiJi(1, 10);
+		t = GenerateRandomNumber(1, 10);
 		if (t < 4)
-			guai = &pig;
+			currentEnemy = &pig;
 		else if (t < 7)
-			guai = &sheep;
+			currentEnemy = &sheep;
 		else
-			guai = &steve;
+			currentEnemy = &steve;
 	}
 	else
-		guai = &cho;
-	guai->sx();
+		currentEnemy = &cho;
+	currentEnemy->DisplayInfo();
 funn:
-	printf("[%s]向你发出了挑战,是否接受？？	(1.yes,2.no)\n", guai->name);
-	in(bb);
-	if (bb == 2)
+	printf("[%s]向你发出了挑战,是否接受？？	(1.yes,2.no)\n", currentEnemy->name);
+	FastReadInteger(inputVarible);
+	if (inputVarible == 2)
 		goto gnn0;
-	if (bb != 1)
+	if (inputVarible != 1)
 	{
 		cout << "输入错误!\n";
 		goto funn;
@@ -1023,53 +1060,53 @@ funn:
 }
 void magic_forest()
 {
-	sprint("\nWelcome to the'Magic Forest'\n");
+	GameColoredPrint("\nWelcome to the'Magic Forest'\n");
 mnn:
-	sprint("======================================\n");
-	sprint("choose:1.观赏风景     2.静坐     3.随便看看\n\n0.退出\n");
-	sprint("======================================\n");
-	in(bb);
-	switch (bb)
+	GameColoredPrint("======================================\n");
+	GameColoredPrint("choose:1.观赏风景     2.静坐     3.随便看看\n\n0.退出\n");
+	GameColoredPrint("======================================\n");
+	FastReadInteger(inputVarible);
+	switch (inputVarible)
 	{
 	case 1:
 	{
-		int sj = SuiJi(1, 100);
+		int sj = GenerateRandomNumber(1, 100);
 		if (sj <= 70)
 		{
 			DelayPrint("\n啊~风景真好");
-			sprint("	经验+2;\n");
+			GameColoredPrint("	经验+2;\n");
 			player.xp += 2;
 			goto mnn;
 		}
 		else
 		{
-			sprint("\n你看见了[森林女王]，她朝你走来:\n\n");
+			GameColoredPrint("\n你看见了[森林女王]，她朝你走来:\n\n");
 			DelayPrint("是谁那么大胆?敢冒犯此地！\n");
 			DelayPrint("	原来是亲爱的");
 			printf("[%s]", player.name);
 			DelayPrint("呀!\n");
 		mqnn:
-			sprint("===================================\n");
-			sprint("你要做什么:\n1.对话     2.战斗     3.(null)\n\n0.退出\n");
-			sprint("===================================\n");
-			in(bb);
-			switch (bb)
+			GameColoredPrint("===================================\n");
+			GameColoredPrint("你要做什么:\n1.对话     2.战斗     3.(null)\n\n0.退出\n");
+			GameColoredPrint("===================================\n");
+			FastReadInteger(inputVarible);
+			switch (inputVarible)
 			{
 			case 1:
 				break;
 			case 2:
 			{
-				sprint("[森林女王]接受了你的挑战!\n\n");
-				guai = &slnw;
+				GameColoredPrint("[森林女王]接受了你的挑战!\n\n");
+				currentEnemy = &slnw;
 				int sao = fight();
 				if (sao == 1)
 				{
-					sprint("\n[森林女王]:");
+					GameColoredPrint("\n[森林女王]:");
 					DelayPrint("\n都多久没有人能打败我啦,你胜利了,这些是给你的奖励：\n");
 				}
 				else if (sao == 0)
 				{
-					sprint("\n[森林女王]:");
+					GameColoredPrint("\n[森林女王]:");
 					DelayPrint("\n要继续加油呀!\n");
 				}
 				break;
@@ -1088,34 +1125,34 @@ mnn:
 	case 2:
 	{
 		int id;
-		sprint("你只是静静地坐着...\n");
-		int zuo = SuiJi(1, 100);
+		GameColoredPrint("你只是静静地坐着...\n");
+		int zuo = GenerateRandomNumber(1, 100);
 		if (zuo >= 60)
 		{
-			sprint("你不知不觉地睡着了\n\n");
+			GameColoredPrint("你不知不觉地睡着了\n\n");
 			Pause();
-			sprint("在梦的幻境中,你遇见了:");
-			int mon = SuiJi(1, 3);
+			GameColoredPrint("在梦的幻境中,你遇见了:");
+			int mon = GenerateRandomNumber(1, 3);
 			switch (mon)
 			{
 			case 1:
-				guai = &mzsw;
+				currentEnemy = &mzsw;
 				break;
 			case 2:
-				guai = &smlr;
+				currentEnemy = &smlr;
 				break;
 			case 3:
-				guai = &ojld;
+				currentEnemy = &ojld;
 				break;
 			}
 		fuck:
 			SetConsoleTextColor(14);
-			printf("[%s]", guai->name);
+			printf("[%s]", currentEnemy->name);
 			SetConsoleTextColor(15);
-			sprint("\nta向你发起了挑战,是否接受(1.yes,2.no)\n");
-			guai->sx();
+			GameColoredPrint("\nta向你发起了挑战,是否接受(1.yes,2.no)\n");
+			currentEnemy->DisplayInfo();
 			int bbb;
-			in(bbb);
+			FastReadInteger(bbb);
 			if (bbb == 2)
 				goto mnn;
 			if (bbb != 1)
@@ -1123,7 +1160,7 @@ mnn:
 				cout << "输入错误\n";
 				goto fuck;
 			}
-			sprint("ta接受了你的挑战！\n");
+			GameColoredPrint("ta接受了你的挑战！\n");
 			int ans = fight();
 			if (ans == 1)
 			{
@@ -1137,7 +1174,7 @@ mnn:
 		}
 		else
 		{
-			sprint("		你好像感悟到了什么,[经验]+4\n");
+			GameColoredPrint("		你好像感悟到了什么,[经验]+4\n");
 			player.xp += 4;
 			Pause();
 			goto mnn;
@@ -1157,15 +1194,15 @@ mnn:
 /*****/
 void mov()
 {
-	sprint("\n-----------------------------------------------\n");
+	GameColoredPrint("\n-----------------------------------------------\n");
 	SetConsoleTextColor(11);
-	sprint("1.探险家的小屋    2.游戏专卖店    3.祈愿求签\n\n");
-	sprint("4.魔法森林    5.冰雪平原    6.(NULL)\n\n");
-	sprint("7.深海古战场    8.云之顶峰    0.退出\n\n请选择：\n");
+	GameColoredPrint("1.探险家的小屋    2.游戏专卖店    3.祈愿求签\n\n");
+	GameColoredPrint("4.魔法森林    5.冰雪平原    6.(NULL)\n\n");
+	GameColoredPrint("7.深海古战场    8.云之顶峰    0.退出\n\n请选择：\n");
 	SetConsoleTextColor(15);
-	sprint("-----------------------------------------------\n");
-	in(bb);
-	switch (bb)
+	GameColoredPrint("-----------------------------------------------\n");
+	FastReadInteger(inputVarible);
+	switch (inputVarible)
 	{
 	case 1:
 		house();
@@ -1193,15 +1230,15 @@ void mov()
 		break;
 	}
 }
-void daoju()
+void SwitchItem()
 {
-	sprint("\n++++++++++++++++++++++++++++++++++++\n");
+	GameColoredPrint("\n++++++++++++++++++++++++++++++++++++\n");
 	SetConsoleTextColor(14);
-	sprint("选择类型：\n1.治愈类     2.辅助类     3.buff类     0.退出\n");
+	GameColoredPrint("选择类型：\n1.治愈类     2.辅助类     3.buff类     0.退出\n");
 	SetConsoleTextColor(15);
-	sprint("++++++++++++++++++++++++++++++++++++\n");
-	in(bb);
-	switch (bb)
+	GameColoredPrint("++++++++++++++++++++++++++++++++++++\n");
+	FastReadInteger(inputVarible);
+	switch (inputVarible)
 	{
 	case 1:
 		break;
@@ -1221,65 +1258,65 @@ void daoju()
 void shop()
 {
 buy:
-	sprint("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-	sprint("【选择类别】\n");
-	sprint("1.宠物类     2.人物类     3.道具类     4.装备类\n\n0.退出\n");
-	sprint("~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-	in(bb);
-	switch (bb)
+	GameColoredPrint("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+	GameColoredPrint("【选择类别】\n");
+	GameColoredPrint("1.宠物类     2.人物类     3.道具类     4.装备类\n\n0.退出\n");
+	GameColoredPrint("~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+	FastReadInteger(inputVarible);
+	switch (inputVarible)
 	{
 	case 1:
 	{
 	bp:
-		int l = strpet(Pet);
+		int l = PetArraySize(petInstance);
 		printf("\n-----\n");
 		for (i = 1; i <= l; i++)
 		// 循环打出宠物名，添加选项
 		{
-			cout << i << ":   " << Pet[i].name << endl;
+			cout << i << ":   " << petInstance[i].name << endl;
 		}
 		cout << "0.退出     请选择：\n";
 		printf("-----\n");
 	buy_pet:
-		in(bb); // 选择：输出宠物属性，是否购买
-		if (bb == 0)
+		FastReadInteger(inputVarible); // 选择：输出宠物属性，是否购买
+		if (inputVarible == 0)
 			goto buy;
-		if (bb < 1 || bb > l)
+		if (inputVarible < 1 || inputVarible > l)
 		{
 			cout << "\n输入错误";
 			goto buy_pet;
 		}
-		Pet[bb].sx();
+		petInstance[inputVarible].sx();
 		cout << "\n是否购买？ 1.yes/2.no\n";
 		int cc;
-		in(cc);
+		FastReadInteger(cc);
 		if (cc == 1)
 		{
 
-			if (strpet(player.p_pet) == -1)
+			if (PetArraySize(player.p_pet) == -1)
 			{
 				cout << "\n抱歉，您的宠物已达到上限，无法进行购买..\n";
 				goto buy;
 			}
 			else
-				for (i = 1; i <= strpet(player.p_pet); i++)
+				for (i = 1; i <= PetArraySize(player.p_pet); i++)
 				{
-					if (strcmp(player.p_pet[i].name, Pet[bb].name) == 0)
+					if (wcscmp(player.p_pet[i].name, petInstance[inputVarible].name) == 0)
 					{
 						cout << "\n您已拥有此宠物!\n";
 						goto buy;
 					}
 				}
-			if (player.money < Pet[bb].money)
+			if (player.money < petInstance[inputVarible].money)
 			{
 				cout << "\n抱歉，您钱币不足，无法进行购买..\n";
 				goto buy;
 			}
 			else
 			{
-				player.money -= Pet[bb].money;
-				player.p_pet[strpet(player.p_pet) + 1] = Pet[bb];
-				cout << "\n成功获得宠物[" << Pet[bb].name << "]\n";
+				player.money -= petInstance[inputVarible].money;
+				player.p_pet[PetArraySize(player.p_pet) + 1] = petInstance[inputVarible];
+				cout << "\n成功获得宠物[" << petInstance[inputVarible].name << "]\n";
 				goto buy;
 			}
 		}
@@ -1292,8 +1329,8 @@ buy:
 		while (1)
 		{
 			printf("\n(1)人物技能     (2)其他     0.返回上一级\n");
-			in(bb);
-			switch (bb)
+			FastReadInteger(inputVarible);
+			switch (inputVarible)
 			{
 			case 1:
 				break;
@@ -1319,29 +1356,29 @@ buy:
 		{
 			printf("%d.(%s)     ", i, c_std[i].name);
 			if (i % 3 == 0 && i + 1 <= l)
-				puts("");
+				puts(L"");
 		}
 		printf("0.退出\n");
 	inc:
-		in(bb);
-		if (bb == 0)
+		FastReadInteger(inputVarible);
+		if (inputVarible == 0)
 			goto buy;
-		if (bb < 0 || bb > l)
+		if (inputVarible < 0 || inputVarible > l)
 		{
 			cout << "choose error\n";
 			goto inc;
 		}
-		c_std[bb].sx();
+		c_std[inputVarible].sx();
 		printf("是否选择购买？1.yes 其他键.no\n");
 		int cc;
-		in(cc);
+		FastReadInteger(cc);
 		if (cc != 1)
 			goto clo;
-		if (player.money >= c_std[bb].money)
+		if (player.money >= c_std[inputVarible].money)
 		{
-			player.money -= c_std[bb].money;
-			number_of_cloth(c_std[bb].name, 1);
-			sprint("\n---购买成功---\n");
+			player.money -= c_std[inputVarible].money;
+			number_of_cloth(c_std[inputVarible].name, 1);
+			GameColoredPrint("\n---购买成功---\n");
 			goto buy;
 		}
 		else
@@ -1360,48 +1397,48 @@ buy:
 }
 void plant()
 {
-	sprint("\n==========================\n");
-	int l = strpla(player.player_plant);
+	GameColoredPrint("\n==========================\n");
+	int l = strpla(player.player_plan);
 	for (int i = 1; i <= l; i++)
 	{
-		sprint("\n----------------------------\n");
-		printf("第【%d】条任务:%s\n", i, player.player_plant[i].name);
-		sprint("\n是否完成：");
-		if (player.player_plant[i].finish == true)
+		GameColoredPrint("\n----------------------------\n");
+		printf("第【%d】条任务:%s\n", i, player.player_plan[i].name);
+		GameColoredPrint("\n是否完成：");
+		if (player.player_plan[i].finish == true)
 			cout << "Yes!\n";
 		else
 			cout << "No!\n";
-		cout << "\n奖励：" << player.player_plant[i].money << endl;
-		if (player.player_plant[i].get == false)
+		cout << "\n奖励：" << player.player_plan[i].money << endl;
+		if (player.player_plan[i].get == false)
 			cout << "未领取\n";
 		else
 			cout << "已领取\n";
-		sprint("----------------------------\n");
+		GameColoredPrint("----------------------------\n");
 	}
-	sprint("==========================\n");
+	GameColoredPrint("==========================\n");
 	// 循环输出任务;
 	cout << "请选择：(0.退出)\n";
 pc:
-	in(bb);
-	if (bb < 0 || bb > l)
+	FastReadInteger(inputVarible);
+	if (inputVarible < 0 || inputVarible > l)
 	{
 		cout << "\n输入错误！！\n";
 		goto pc;
 	}
-	else if (bb == 0)
+	else if (inputVarible == 0)
 		return;
 	else
 	{
-		if (player.player_plant[bb].finish == false)
+		if (player.player_plan[inputVarible].finish == false)
 		{
 			cout << "\n此任务未完成\n";
 			goto pc;
 		}
-		if (player.player_plant[bb].get == false)
+		if (player.player_plan[inputVarible].get == false)
 		{
 			cout << "\n领取成功！\n";
-			player.player_plant[bb].get = true;
-			player.money += player.player_plant[bb].money;
+			player.player_plan[inputVarible].get = true;
+			player.money += player.player_plan[inputVarible].money;
 		}
 		else
 		{
@@ -1415,13 +1452,13 @@ pc:
 void about_pet()
 {
 sp:
-	int l = strpet(player.p_pet);
+	int l = PetArraySize(player.p_pet);
 	if (l == 0)
 	{
 		cout << "\n您并没有宠物..\n";
 		return;
 	}
-	sprint("\n~_~_~_~_~_~_~_~_~_~_~_~\n");
+	GameColoredPrint("\n~_~_~_~_~_~_~_~_~_~_~_~\n");
 	for (int i = 1; i <= l; i++)
 	{
 		cout << i << ": " << player.p_pet[i].name << "     ";
@@ -1429,29 +1466,29 @@ sp:
 			puts("\n");
 	}
 	cout << "\n请选择(0.退出)\n";
-	sprint("\n~_~_~_~_~_~_~_~_~_~_~_~\n");
+	GameColoredPrint("\n~_~_~_~_~_~_~_~_~_~_~_~\n");
 apc:
-	in(bb);
-	if (bb == 0)
+	FastReadInteger(inputVarible);
+	if (inputVarible == 0)
 		return;
-	if (bb < 0 || bb > l)
+	if (inputVarible < 0 || inputVarible > l)
 	{
 		cout << "输入错误\n";
 		goto apc;
 	}
 pnn:
-	sprint("\n----your pet----(^_^)\n");
-	printf("【%s】:\n", player.p_pet[bb].name);
-	sprint("1.恢复     2.升级     3.装备\n\n4.属性     5.放生     0.返回上一级\n");
-	sprint("---------------------\n");
+	GameColoredPrint("\n----your pet----(^_^)\n");
+	printf("【%s】:\n", player.p_pet[inputVarible].name);
+	GameColoredPrint("1.恢复     2.升级     3.装备\n\n4.属性     5.放生     0.返回上一级\n");
+	GameColoredPrint("---------------------\n");
 	int cc;
 pnn1:
-	in(cc);
+	FastReadInteger(cc);
 	switch (cc)
 	{
 	case 1:
 	{
-		if (player.p_pet[bb].health == player.p_pet[bb].max_health)
+		if (player.p_pet[inputVarible].health == player.p_pet[inputVarible].max_health)
 		{
 			cout << "\n[系统]:宠物'完好无损',无需恢复,自动返回上级\n";
 			goto pnn;
@@ -1478,7 +1515,7 @@ pnn1:
 			else
 			{
 				player.money -= 100;
-				player.p_pet[bb].health = player.p_pet[bb].max_health;
+				player.p_pet[inputVarible].health = player.p_pet[inputVarible].max_health;
 				cout << "\n您为宠物【氪金】成功\n";
 				goto pnn;
 			}
@@ -1487,11 +1524,11 @@ pnn1:
 	}
 	case 2:
 	{
-		printf("该宠物拥有经验数：%lld\n该宠物升级需要经验数:%lld\n宠物等级：%lld\n", player.p_pet[bb].xp, player.p_pet[bb].max_xp, player.p_pet[bb].level);
-		sprint("是否升级？1.yes/2.no\n");
+		printf("该宠物拥有经验数：%lld\n该宠物升级需要经验数:%lld\n宠物等级：%lld\n", player.p_pet[inputVarible].xp, player.p_pet[inputVarible].max_xp, player.p_pet[inputVarible].level);
+		GameColoredPrint("是否升级？1.yes/2.no\n");
 		int cc;
 	pnn3:
-		in(cc);
+		FastReadInteger(cc);
 		if (cc != 1 && cc != 2)
 		{
 			cout << "\n输入错误\n";
@@ -1499,7 +1536,7 @@ pnn1:
 		}
 		else if (cc == 1)
 		{
-			if (player.p_pet[bb].xp < player.p_pet[bb].max_xp)
+			if (player.p_pet[inputVarible].xp < player.p_pet[inputVarible].max_xp)
 			{
 				cout << "\n经验不足\n";
 				goto pnn;
@@ -1507,8 +1544,8 @@ pnn1:
 			else
 			{
 				cout << "\n升级成功\n";
-				player.p_pet[bb].level_up();
-				player.p_pet[bb].health = player.p_pet[bb].max_health;
+				player.p_pet[inputVarible].level_up();
+				player.p_pet[inputVarible].health = player.p_pet[inputVarible].max_health;
 				goto pnn;
 			}
 		}
@@ -1522,15 +1559,15 @@ pnn1:
 	}
 	case 4:
 	{
-		player.p_pet[bb].sx();
+		player.p_pet[inputVarible].sx();
 		break;
 	}
 	case 5:
 	{
 	pnn_:
-		sprint("\n是否放生您的宠物(请慎重!)1.yes/2.no\n");
+		GameColoredPrint("\n是否放生您的宠物(请慎重!)1.yes/2.no\n");
 		int dd;
-		in(dd);
+		FastReadInteger(dd);
 		if (dd != 1 && dd != 2)
 		{
 			cout << "\n输入错误！！\n";
@@ -1538,9 +1575,9 @@ pnn1:
 		}
 		if (dd == 1)
 		{
-			swap(player.p_pet[strpet(player.p_pet)], player.p_pet[bb]);
-			player.p_pet[strpet(player.p_pet)] = empity;
-			sprint("[系统]:该宠物放生成功");
+			std::swap(player.p_pet[PetArraySize(player.p_pet)], player.p_pet[inputVarible]);
+			player.p_pet[PetArraySize(player.p_pet)] = empity;
+			GameColoredPrint("[系统]:该宠物放生成功");
 		}
 		goto sp;
 		break;
@@ -1560,30 +1597,30 @@ pnn1:
 }
 void change_cloths(Cloths &ac)
 {
-	if (strcmp(ac.name, "\0") == 0)
+	if (wcscmp(ac.name, "\0") == 0)
 	{
-		sprint("\n此栏并没有任何装备\n	请选择你要替换的装备:\n");
+		GameColoredPrint("\n此栏并没有任何装备\n	请选择你要替换的装备:\n");
 	}
 	else
 	{
 		ac.sx();
-		sprint("您要将[");
+		GameColoredPrint("您要将[");
 		printf("%s", ac.name);
-		sprint("]替换成什么:\n");
+		GameColoredPrint("]替换成什么:\n");
 	}
 	int sum = jiazaic();
 	if (sum == 0)
 	{
 		cout << "\n您一件装备也没有\n";
 		printf("是否脱下此装备？？？1.yes 其它.no\n");
-		in(bb);
-		if (bb == 1)
+		FastReadInteger(inputVarible);
+		if (inputVarible == 1)
 		{
 			player.attack -= ac.attack_up;
 			player.defense -= ac.defense_up;
 			for (int i = 1; i <= strclo(c_std); i++)
 			{
-				if (strcmp(c_std[i].name, ac.name) == 0)
+				if (wcscmp(c_std[i].name, ac.name) == 0)
 				{
 					c_std[i].num++;
 				}
@@ -1601,40 +1638,40 @@ void change_cloths(Cloths &ac)
 	{
 		printf("%d.[%s] ", i, canin[i].name);
 		if (i % 3 == 0 && i + 1 != sum)
-			puts("");
+			puts(L"");
 	}
 	printf("\n请选择:999.脱下此装备     (0.退出)\n");
 	printf("================================\n");
 	SetConsoleTextColor(15);
 ccnn:
-	in(bb);
-	if ((bb < 0 || bb > sum) && bb != 999)
+	FastReadInteger(inputVarible);
+	if ((inputVarible < 0 || inputVarible > sum) && inputVarible != 999)
 	{
 		cout << "\nchoose error\n";
 		goto ccnn;
 	}
-	if (bb == 0)
+	if (inputVarible == 0)
 	{
 		return;
 	}
-	else if (bb != 999)
+	else if (inputVarible != 999)
 	{
 		player.attack -= ac.attack_up;
 		player.defense -= ac.defense_up;
-		player.attack += canin[bb].attack_up;
-		player.defense += canin[bb].defense_up;
+		player.attack += canin[inputVarible].attack_up;
+		player.defense += canin[inputVarible].defense_up;
 		for (int i = 1; i <= strclo(c_std); i++)
 		{
-			if (strcmp(c_std[i].name, ac.name) == 0)
+			if (wcscmp(c_std[i].name, ac.name) == 0)
 			{
 				c_std[i].num++;
 			}
-			if (strcmp(c_std[i].name, canin[bb].name) == 0)
+			if (wcscmp(c_std[i].name, canin[inputVarible].name) == 0)
 			{
 				c_std[i].num--;
 			}
 		}
-		ac = canin[bb];
+		ac = canin[inputVarible];
 	}
 	else
 	{
@@ -1642,7 +1679,7 @@ ccnn:
 		player.defense -= ac.defense_up;
 		for (int i = 1; i <= strclo(c_std); i++)
 		{
-			if (strcmp(c_std[i].name, ac.name) == 0)
+			if (wcscmp(c_std[i].name, ac.name) == 0)
 			{
 				c_std[i].num++;
 			}
@@ -1654,20 +1691,20 @@ void myself1()
 {
 	player.sx();
 ms1:
-	sprint("---------------\n");
-	sprint("你要做什么:\n1.切换装备     0.退出\n");
-	sprint("---------------\n");
+	GameColoredPrint("---------------\n");
+	GameColoredPrint("你要做什么:\n1.切换装备     0.退出\n");
+	GameColoredPrint("---------------\n");
 	Cloths now;
 	int jjj;
-	in(bb);
-	switch (bb)
+	FastReadInteger(inputVarible);
+	switch (inputVarible)
 	{
 	case 1:
 	{
 	zbnn:
 		printf("\n1.头部:[%s]	2.身体:[%s]\n\n3.腿部:[%s]	4.脚部:[%s]\n\n5.手部[%s]	6.肩膀[%s]\n0.退出\n", player.slot.head, player.slot.body, player.slot.leg, player.slot.foot, player.fight.hand, player.fight.arm);
-		in(bb);
-		switch (bb)
+		FastReadInteger(inputVarible);
+		switch (inputVarible)
 		{
 		case 1:
 			change_cloths(player.slot.head);
@@ -1699,7 +1736,7 @@ ms1:
 	case 0:
 		return;
 	default:
-		sprint("输入错误\n");
+		GameColoredPrint("输入错误\n");
 		goto ms1;
 	}
 	goto zbnn;
@@ -1707,12 +1744,12 @@ ms1:
 void myself()
 {
 msn:
-	sprint("-------------------------------------\n");
+	GameColoredPrint("-------------------------------------\n");
 	printf("[%s]你要做什么?\n", player.name);
-	sprint("1.查看基本属性     2.升级     3.恢复\n\n0.退出\n");
-	sprint("-------------------------------------\n");
-	in(bb);
-	switch (bb)
+	GameColoredPrint("1.查看基本属性     2.升级     3.恢复\n\n0.退出\n");
+	GameColoredPrint("-------------------------------------\n");
+	FastReadInteger(inputVarible);
+	switch (inputVarible)
 	{
 	case 1:
 		myself1();
@@ -1722,7 +1759,7 @@ msn:
 		printf("您拥有经验:[%lld]\n升级所需经验:[%lld]\n您的等级:[%lld]\n是否升级?(1.yes,2.no)", player.xp, player.max_xp, player.level);
 	shit:
 		int bbbb;
-		in(bbbb);
+		FastReadInteger(bbbb);
 		if (bbbb == 2)
 			goto msn;
 		if (bbbb != 1)
@@ -1748,14 +1785,14 @@ msn:
 	{
 		if (player.health == player.max_health)
 		{
-			sprint("您血量已满,无需恢复\n");
+			GameColoredPrint("您血量已满,无需恢复\n");
 			goto msn;
 		}
 		int huafei = (player.max_health - player.health) / 2;
 		printf("\n您的生命[%lld]\n生命上限[%lld]\n恢复至上限需要[%lld]金币\n", player.health, player.max_health, huafei);
 		printf("\n请输入您想恢复的生命(0退出):");
 		int xx;
-		in(xx);
+		FastReadInteger(xx);
 		if (xx == 0)
 			goto msn;
 		if (xx > player.max_health - player.health)
@@ -1802,7 +1839,7 @@ void news()
 		player.money += 1000;
 		player.xp += 100;
 		wor.last = wor.now;
-		write();
+		WriteSave();
 		Pause();
 	}
 	else
@@ -1815,23 +1852,23 @@ void news()
 void start()
 {
 	cout << "【" << player.name << "】要干什么？";
-	sprint("\n================================\n");
+	GameColoredPrint("\n================================\n");
 	SetConsoleTextColor(13);
-	sprint("1.移动    2.道具    3.查看个人属性    4.背包\n\n");
-	sprint("5.宠物    6.商店    7.神话专区    8.系统消息\n\n");
-	sprint("9.任务    10.功能\n\n");
-	sprint("11.版本更新    12.游戏版权    13.版本介绍    0.退出游戏\n");
+	GameColoredPrint("1.移动    2.道具    3.查看个人属性    4.背包\n\n");
+	GameColoredPrint("5.宠物    6.商店    7.神话专区    8.系统消息\n\n");
+	GameColoredPrint("9.任务    10.功能\n\n");
+	GameColoredPrint("11.版本更新    12.游戏版权    13.版本介绍    0.退出游戏\n");
 	SetConsoleTextColor(15);
-	sprint("请选择:\n");
-	sprint("================================\n");
-	in(bb);
-	switch (bb)
+	GameColoredPrint("请选择:\n");
+	GameColoredPrint("================================\n");
+	FastReadInteger(inputVarible);
+	switch (inputVarible)
 	{
 	case 1:
 		mov();
 		break;
 	case 2:
-		daoju();
+		SwitchItem();
 		break;
 	case 3:
 		myself();
@@ -1850,7 +1887,7 @@ void start()
 		news();
 		break;
 	case 9:
-		plant();
+		plan();
 		break;
 	case 10:
 		break;
@@ -1863,7 +1900,7 @@ void start()
 		about_us();
 		break;
 	case 0:
-		out();
+		Exit();
 		break;
 	default:
 		cout << "输入错误\n";
@@ -1876,8 +1913,8 @@ int main()
 	system("title 无尽の冒险");
 	SetWindowPosition(0, 0);
 	system("mode con lines=60 cols=188");
-	join(); // 146
-	read(); // 读取存档
+	join();		// 146
+	ReadSave(); // 读取存档
 	while (1)
 	{
 		start();
@@ -1890,7 +1927,7 @@ void SetConsoleTextColor(long long a)
 {
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), a);
 }
-void DelayPrint(char *p)
+void DelayPrint(wchar_t *p)
 {
 	while (1)
 	{
@@ -1916,11 +1953,11 @@ void SetWindowPosition(int x, int y)
 	hwnd = GetForegroundWindow();
 	MoveWindow(hwnd, x, y, 0, 0, true);
 }
-void in(int &a)
+void FastReadInteger(int &a)
 {
 	a = 0;
 	bool c = false;
-	char s;
+	wchar_t s;
 	while (1)
 	{
 		s = getchar();
@@ -1932,12 +1969,12 @@ void in(int &a)
 }
 void Pause()
 {
-	DelayPrint("");
+	DelayPrint(L"");
 	printf("按任意键继续喔~");
 	getch();
 	cout << "\r";
 }
-void sprint(char *p)
+void GameColoredPrint(const wchar_t p[])
 {
 	while (1)
 	{
@@ -1958,25 +1995,25 @@ void sprint(char *p)
 		SetConsoleTextColor(15);
 	}
 }
-int SuiJi(int a, int b)
+int GenerateRandomNumber(int a, int b)
 {
 	// 随机函数，从数a~b之间随机取数
 	return rand() % b + a;
 }
-void write()
+void WriteSave()
 {
-	ofstream w;
-	ofstream outfile;
+	std::ofstream w;
+	std::ofstream outfile;
 	w.open("无尽の冒险（请勿删除否则导致游戏崩溃）.egame");
-	w.write((const char *)(&player), sizeof(player));
-	w.write((const char *)(&wor), sizeof(wor));
-	w.write((const char *)(&c_std), sizeof(c_std));
-	w.write((const char *)(&monster), sizeof(monster));
+	w.write((const wchar_t *)(&player), sizeof(player));
+	w.write((const wchar_t *)(&wor), sizeof(wor));
+	w.write((const wchar_t *)(&c_std), sizeof(c_std));
+	w.write((const wchar_t *)(&monster), sizeof(monster));
 	w.close();
 }
-void read()
+void ReadSave()
 {
-	ifstream r;
+	std::ifstream r;
 	r.open("无尽の冒险（请勿删除否则导致游戏崩溃）.egame");
 	if (!r.is_open())
 	{
@@ -1984,17 +2021,17 @@ void read()
 		zdy_player();
 		return;
 	}
-	r.read((char *)(&player), sizeof(player));
-	r.read((char *)(&wor), sizeof(wor));
-	r.read((char *)(&c_std), sizeof(c_std));
-	r.read((char *)(&monster), sizeof(monster));
+	r.read((wchar_t *)(&player), sizeof(player));
+	r.read((wchar_t *)(&wor), sizeof(wor));
+	r.read((wchar_t *)(&c_std), sizeof(c_std));
+	r.read((wchar_t *)(&monster), sizeof(monster));
 	r.close();
 }
-void out()
+void Exit()
 {
-	if (MessageBox(NULL, "\1是否退出\1", "无尽の冒险", MB_ICONQUESTION | MB_YESNO) == IDNO)
+	if (MessageBox(NULL, L"\1是否退出\1", L"无尽の冒险", MB_ICONQUESTION | MB_YESNO) == IDNO)
 		return;
-	write();
+	WriteSave();
 	DelayPrint("感谢各位玩家大大的支持！拜拜~");
 	exit(0);
 }
