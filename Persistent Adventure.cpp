@@ -2010,7 +2010,8 @@ void WriteSave()
 {
 	std::ofstream w;
 	std::ofstream outfile;
-	w.open("无尽の冒险（请勿删除否则导致游戏崩溃）.egame", std::ios::binary | std::ios::out);
+	// 创建并保存到文件
+	w.open("无尽の冒险（请勿删除否则导致游戏崩溃）.egame", std::ios::binary | std::ios::out | std::ios::trunc);
 	w.write((const char *)(&player), sizeof(player));
 	w.write((const char *)(&wor), sizeof(wor));
 	w.write((const char *)(&c_std), sizeof(c_std));
